@@ -1,0 +1,51 @@
+--- a/dmenu.c
++++ b/dmenu.c
+@@ -304,6 +304,28 @@
+ 	}
+ }
+ 
++static void 
++mhighlight(XEvent * e) {
++    XMotionEvent * ev = &e->xmotion;
++    struct item * itm;
++    int i,index = 0, x = promptw + inputw + TEXTW("<");
++
++    if (lines == 0) {
++	for (itm = curr; itm != next; itm = itm->right) {
++            x += TEXTW(itm->text);
++            if (ev->x < x) {
++                sel = itm;
++                break;
++            }
++        }
++    } else {
++        index = (ev->y - bh)/bh;
++        for (i = 0, itm = curr; i < index && itm != next; i++, itm = itm->right) {}
++        sel = itm;
++    }
++    drawmenu();
++}
++
+ static void
+ keypress(XKeyEvent *ev)
+ {
+@@ -581,6 +603,9 @@
+ 			if (ev.xvisibility.state != VisibilityUnobscured)
+ 				XRaiseWindow(dpy, win);
+ 			break;
++                case MotionNotify:
++                        mhighlight(&ev);
++                        break;
+ 		}
+ 	}
+ }
+@@ -658,7 +683,8 @@
+ 	/* create menu window */
+ 	swa.override_redirect = True;
+ 	swa.background_pixel = scheme[SchemeNorm][ColBg].pixel;
+-	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
++	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask |
++                         ButtonPressMask | PointerMotionMask;
+ 	win = XCreateWindow(dpy, parentwin, x, y, mw, mh, 0,
+ 	                    CopyFromParent, CopyFromParent, CopyFromParent,
+ 	                    CWOverrideRedirect | CWBackPixel | CWEventMask, &swa);
